@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Selector - Goodluck!</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -45,19 +44,15 @@
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
-    <!-- Bouncing Ball Container and Element -->
     <div id="ball-container">
         <div id="ball"></div>
     </div>
 
-    <!-- Main Application Content (Form/Quiz Selector) -->
     <div id="app-content" class="p-6 md:p-10 w-full max-w-md bg-white/10 backdrop-blur-md rounded-xl shadow-2xl border border-white/20">
         <div id="main-ui">
-            <!-- Content loaded by JavaScript -->
-        </div>
+            </div>
     </div>
 
-    <!-- Firebase SDK Imports (Boilerplate) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -93,7 +88,6 @@
         window.addEventListener('load', initializeFirebase);
     </script>
 
-    <!-- Application Logic (UI & Animation) -->
     <script>
         let userName = '';
         let currentView = 'nameEntry'; // 'nameEntry' or 'quizSelection'
@@ -102,19 +96,38 @@
         // --- Bouncing Ball Logic (Simulating kap.png movement) ---
         const ball = document.getElementById('ball');
         const container = document.getElementById('ball-container');
-        let x = 50; // Initial x position (px)
-        let y = 50; // Initial y position (px)
-        let dx = 1; // Initial direction (x)
-        let dy = 1; // Initial direction (y)
+        let dx = 1; // Initial direction vector (will be normalized)
+        let dy = 0.5; // Initial direction vector (will be normalized)
         
-        // FIX: Updated ballSize to 500 to match the CSS dimensions for correct bouncing
         const ballSize = 500; 
         
+        let x, y; // Position variables
         let lastTime = 0;
-        const speed = 200; // px per second
+        const speed = 300; // px per second (Adjust for faster/slower animation)
+
+        /**
+         * Normalizes the direction vector (dx, dy) to ensure a consistent speed.
+         */
+        function normalizeDirection() {
+            const magnitude = Math.sqrt(dx * dx + dy * dy);
+            dx /= magnitude;
+            dy /= magnitude;
+        }
 
         function animateBall(timestamp) {
             if (!container || !ball) return;
+
+            // Initialize x and y on the first frame if not set (for centering)
+            if (x === undefined || y === undefined) {
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                x = (containerWidth - ballSize) / 2;
+                y = (containerHeight - ballSize) / 2;
+                normalizeDirection();
+                lastTime = timestamp; // Reset lastTime after initial setup
+                requestAnimationFrame(animateBall);
+                return;
+            }
 
             const deltaTime = (timestamp - lastTime) / 1000;
             lastTime = timestamp;
@@ -127,20 +140,33 @@
             y += dy * speed * deltaTime;
 
             // Collision detection (bouncing off walls)
+            let collided = false;
+
+            // X-axis collision
             if (x + ballSize > containerWidth) {
                 x = containerWidth - ballSize;
                 dx = -Math.abs(dx); // Reverse x direction
+                collided = true;
             } else if (x < 0) {
                 x = 0;
                 dx = Math.abs(dx); // Reverse x direction
+                collided = true;
             }
 
+            // Y-axis collision
             if (y + ballSize > containerHeight) {
                 y = containerHeight - ballSize;
                 dy = -Math.abs(dy); // Reverse y direction
+                collided = true;
             } else if (y < 0) {
                 y = 0;
                 dy = Math.abs(dy); // Reverse y direction
+                collided = true;
+            }
+            
+            // Re-normalize the direction after a bounce to ensure speed remains constant
+            if (collided) {
+                normalizeDirection();
             }
 
             // Apply transformation
@@ -149,38 +175,49 @@
             requestAnimationFrame(animateBall);
         }
 
-        // --- DOWNLOAD LOGIC ---
+        // -----------------------------------------------------------------
+        // --- DOWNLOAD LOGIC FIX: Linking to existing files ---------------
+        // -----------------------------------------------------------------
+        
+        /**
+         * Helper function to create and trigger a download link to an existing file.
+         * @param {string} filename - The name the user will save the file as.
+         * @param {string} filepath - The relative path to the file on the server.
+         */
+        function triggerDownloadFromPath(filename, filepath) {
+            const element = document.createElement('a');
+            
+            // Set the href to the actual file path on the server
+            element.setAttribute('href', filepath); 
+            
+            // The 'download' attribute ensures the file is downloaded and named correctly
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
 
         /**
-         * Function to simulate the download of the reviewer files.
-         * Creates two temporary anchor tags and clicks them to trigger a browser download.
+         * Function to trigger the download of the reviewer files.
+         * This now links directly to the .docx files in your directory.
+         * * ASSUMPTION: 'secu.docx' and 'rod.docx' are in the same directory 
+         * as this HTML file. Adjust the path if they are in a subdirectory 
+         * (e.g., 'files/secu.docx').
          */
         function downloadReviewer() {
-            // Helper function to create and trigger a download
-            function triggerDownload(filename, content) {
-                const element = document.createElement('a');
-                // Use a simple data URI (text/plain) to create a downloadable file with the correct name
-                // The browser will save this file, named as 'filename'.
-                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
-                element.setAttribute('download', filename);
+            triggerDownloadFromPath('secu.docx', './secu.docx');
+            triggerDownloadFromPath('rod.docx', './rod.docx');
 
-                element.style.display = 'none';
-                document.body.appendChild(element);
-
-                element.click();
-
-                document.body.removeChild(element);
-            }
-
-            // Trigger downloads for both requested files (secu.docx and rod.docx)
-            triggerDownload('secu.docx', 'Content for Maam Diane Exam Reviewer - P.S. Wag ka na magpuyat!');
-            triggerDownload('rod.docx', 'Content for Sir Rodlin Exam Reviewer - Good luck!');
-
-            console.log("Download function triggered for secu.docx and rod.docx");
+            console.log("Download triggered for existing secu.docx and rod.docx files.");
         }
         
-        // Expose function to global scope so it can be called from the onclick attribute
+        // Expose functions to global scope for HTML onclick attributes
         window.downloadReviewer = downloadReviewer;
+        window.startQuiz = startQuiz;
 
         // --- UI Rendering Functions ---
 
@@ -189,7 +226,6 @@
                 <h1 class="text-3xl font-black text-white mb-6 text-center">QUIZ START</h1>
                 <form id="name-form" class="space-y-6">
                     <div>
-                        <!-- Requested label text -->
                         <label for="name" class="block text-sm font-bold text-red-400 mb-2 uppercase tracking-wider">
                             LAGAY MO PANGALAN MO KING INA MO.
                         </label>
@@ -228,7 +264,6 @@
                 </p>
 
                 <div class="space-y-4 mb-8">
-                    <!-- Quiz Options -->
                     <button onclick="startQuiz('Maam Diane Exam', 'secu.html')"
                             class="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-extrabold rounded-xl shadow-lg transition transform hover:-translate-y-1 active:scale-95">
                         Maam Diane Exam
@@ -239,7 +274,6 @@
                     </button>
                 </div>
 
-                <!-- NEW DOWNLOAD SECTION -->
                 <div class="p-4 bg-red-800/20 rounded-xl border-2 border-red-700/50 text-center space-y-3">
                     <p class="text-white font-black text-lg">
                         HINDI KA NAGREVIEW?
@@ -252,8 +286,7 @@
                         <span class="text-2xl mr-2">⬇️</span> DOWNLOAD REVIEWER
                     </button>
                 </div>
-                <!-- END NEW DOWNLOAD SECTION -->
-            `;
+                `;
         }
 
         /**
@@ -277,13 +310,21 @@
 
         // Start animation and UI on window load
         window.onload = function() {
+            // Initial position will be set inside animateBall for dynamic centering
             lastTime = performance.now(); // Initialize lastTime
             requestAnimationFrame(animateBall);
             renderUI();
         };
-
+        
+        // Handle resizing
         window.onresize = () => {
-            // No need for a full re-render, ball logic handles bounds dynamically.
+             // Clamping x and y to prevent the ball from escaping on rapid resize
+             if (x !== undefined && y !== undefined) {
+                 const containerWidth = container.clientWidth;
+                 const containerHeight = container.clientHeight;
+                 x = Math.max(0, Math.min(x, containerWidth - ballSize));
+                 y = Math.max(0, Math.min(y, containerHeight - ballSize));
+             }
         };
     </script>
 
