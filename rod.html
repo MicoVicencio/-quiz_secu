@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100-Question Computer Ethics and Law Quiz</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        /* Custom styles for button feedback */
+        .answer-button {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .correct {
+            background-color: #10B981 !important; /* Green-600 */
+            color: white !important;
+            border-color: #059669 !important;
+            transform: scale(1.02);
+        }
+        .wrong {
+            background-color: #EF4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #DC2626 !important;
+            transform: scale(0.98);
+            opacity: 0.7;
+        }
+        .answer-button:disabled:not(.correct):not(.wrong) {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Quiz Container -->
+    <div id="quiz-container" class="bg-white shadow-2xl rounded-xl w-full max-w-2xl p-6 md:p-10 border border-gray-100">
+
+        <!-- Header -->
+        <header class="mb-6 border-b pb-4">
+            <h1 class="text-3xl font-extrabold text-gray-800">Computer Ethics and Law Fundamentals Quiz</h1>
+            <div class="mt-2 flex justify-between items-center text-sm font-medium text-gray-600">
+                <span id="topic-display" class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"></span>
+                <span id="score-display">Score: <strong class="text-green-600" id="current-score">0</strong> / <span id="total-questions">100</span></span>
+            </div>
+        </header>
+
+        <!-- Question Section -->
+        <div id="question-section" class="mb-8">
+            <p class="text-lg font-semibold text-gray-800 mb-4" id="question-text"></p>
+            <div id="answer-options" class="grid grid-cols-1 gap-4">
+                <!-- Answer buttons will be injected here -->
+            </div>
+        </div>
+
+        <!-- Navigation and Status Footer -->
+        <footer class="flex flex-col md:flex-row justify-between items-center border-t pt-4 space-y-4 md:space-y-0">
+            <div class="text-gray-500 font-medium text-sm">
+                Question <span id="current-q-num" class="font-bold text-gray-800">1</span> of <span class="font-bold text-gray-800" id="total-q-num">100</span>
+            </div>
+            <div class="flex space-x-3">
+                <button id="prev-btn" class="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Previous
+                </button>
+                <button id="next-btn" class="px-8 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Check & Next
+                </button>
+            </div>
+        </footer>
+
+        <!-- Finish Quiz Modal/Message -->
+        <div id="finish-message" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
+                <h2 class="text-3xl font-bold text-indigo-600 mb-4">Quiz Complete!</h2>
+                <p class="text-xl text-gray-700 mb-6">Your final score is: <span class="font-extrabold text-4xl text-green-600" id="final-score"></span> / 100</p>
+                <p class="text-gray-500 mb-8">Great job on finishing the quiz. Click 'Review' to go back to the first question or 'Restart' to try again.</p>
+                <div class="flex justify-center space-x-4">
+                    <button onclick="restartQuiz(true)" class="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors">Review</button>
+                    <button onclick="restartQuiz(false)" class="px-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">Restart</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // The quiz data array contains 100 questions exclusively based on the "Review of.docx" file.
+        const quizData = [
+            // --- Topic 1: Computer Ethics and Fallacies (Q1-Q25) ---
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "1. Which branch of practical philosophy guides computing professionals on professional and social conduct?",
+                "options": {
+                    "A": "Information Assurance",
+                    "B": "Computer Ethics",
+                    "C": "Internet Governance",
+                    "D": "Professional Competence"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "2. Computer ethics explores moral principles for using computers and what other kind of technologies?",
+                "options": {
+                    "A": "Mechanical",
+                    "B": "Analog",
+                    "C": "Digital",
+                    "D": "Biological"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "3. Which of these is an issue that computer ethics addresses?",
+                "options": {
+                    "A": "Manufacturing efficiency",
+                    "B": "Data security",
+                    "C": "Physical network installation",
+                    "D": "Software license negotiation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "4. Misconceptions that lead to unethical choices in computing are known as:",
+                "options": {
+                    "A": "Ethical Frameworks",
+                    "B": "Moral Paradoxes",
+                    "C": "Common Computer Ethics Fallacies",
+                    "D": "Code of Conduct Violations"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "5. The belief that actions on a computer don't have real-world consequences is known as which fallacy?",
+                "options": {
+                    "A": "Law-Abiding Citizen Fallacy",
+                    "B": "Hacker's Fallacy",
+                    "C": "Computer Game Fallacy",
+                    "D": "Shatterproof Fallacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "6. Stealing files or cheating in a game would be examples of actions covered by the denial of the:",
+                "options": {
+                    "A": "Free Information Fallacy",
+                    "B": "Computer Game Fallacy",
+                    "C": "Candy from a Baby Fallacy",
+                    "D": "Law-Abiding Citizen Fallacy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "7. The idea that as long as an action is legal, it is ethical, is defined as the:",
+                "options": {
+                    "A": "Shatterproof Fallacy",
+                    "B": "Free Information Fallacy",
+                    "C": "Law-Abiding Citizen Fallacy",
+                    "D": "Hacker's Fallacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "8. The Law-Abiding Citizen Fallacy incorrectly ignores the fact that not all unethical actions are:",
+                "options": {
+                    "A": "Profitable",
+                    "B": "Illegal",
+                    "C": "Difficult",
+                    "D": "Transparent"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "9. Which fallacy involves the belief that computers cannot be harmed, justifying tampering with them?",
+                "options": {
+                    "A": "Shatterproof Fallacy",
+                    "B": "Computer Game Fallacy",
+                    "C": "Hacker's Fallacy",
+                    "D": "Candy from a Baby Fallacy"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "10. The Shatterproof Fallacy can actually cause real harm, such as data loss or:",
+                "options": {
+                    "A": "Code compilation",
+                    "B": "System failure",
+                    "C": "Increased performance",
+                    "D": "Network redundancy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "11. The idea that if something is easy to do, it must be okay is described by which fallacy?",
+                "options": {
+                    "A": "Hacker's Fallacy",
+                    "B": "Law-Abiding Citizen Fallacy",
+                    "C": "Candy from a Baby Fallacy",
+                    "D": "Free Information Fallacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "12. The belief that hacking is acceptable if done for fun or curiosity is known as the:",
+                "options": {
+                    "A": "Shatterproof Fallacy",
+                    "B": "Hacker's Fallacy",
+                    "C": "Computer Game Fallacy",
+                    "D": "Law-Abiding Citizen Fallacy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "13. The Hacker's Fallacy violates which two fundamental principles of systems access?",
+                "options": {
+                    "A": "Speed and efficiency",
+                    "B": "Privacy and trust",
+                    "C": "Legality and profitability",
+                    "D": "Anonymity and free speech"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "14. The belief that all internet information should be free, ignoring copyright laws and ownership, is the:",
+                "options": {
+                    "A": "Free Information Fallacy",
+                    "B": "Candy from a Baby Fallacy",
+                    "C": "Law-Abiding Citizen Fallacy",
+                    "D": "Shatterproof Fallacy"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "15. Downloading copyrighted content without permission is considered stealing under the rejection of which fallacy?",
+                "options": {
+                    "A": "Hacker's Fallacy",
+                    "B": "Computer Game Fallacy",
+                    "C": "Free Information Fallacy",
+                    "D": "Shatterproof Fallacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "16. Computer ethics addresses the ethical use of which advanced technology?",
+                "options": {
+                    "A": "Artificial Intelligence (AI)",
+                    "B": "Nuclear fusion",
+                    "C": "Biotechnology",
+                    "D": "Mechanical engineering"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "17. Computer ethics is a branch of which broader philosophical concept?",
+                "options": {
+                    "A": "Metaphysics",
+                    "B": "Epistemology",
+                    "C": "Practical philosophy",
+                    "D": "Aesthetics"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "18. Which fallacy could be used to justify tampering with a computer because 'it can't be harmed'?",
+                "options": {
+                    "A": "Computer Game Fallacy",
+                    "B": "Law-Abiding Citizen Fallacy",
+                    "C": "Shatterproof Fallacy",
+                    "D": "Candy from a Baby Fallacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "19. If a file is easily accessible but protected by copyright, taking it would be an example of succumbing to both the Candy from a Baby Fallacy and the:",
+                "options": {
+                    "A": "Hacker's Fallacy",
+                    "B": "Free Information Fallacy",
+                    "C": "Shatterproof Fallacy",
+                    "D": "Law-Abiding Citizen Fallacy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "20. The Hacker's Fallacy allows one to access systems without:",
+                "options": {
+                    "A": "Advanced training",
+                    "B": "A legal contract",
+                    "C": "Permission",
+                    "D": "High-speed internet"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "21. Computer ethics addresses issues related to personal information known as:",
+                "options": {
+                    "A": "Efficiency",
+                    "B": "Privacy",
+                    "C": "Globalization",
+                    "D": "Optimization"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "22. Which fallacy is associated with believing that an action is acceptable simply because it is *easy* to execute?",
+                "options": {
+                    "A": "Law-Abiding Citizen Fallacy",
+                    "B": "Candy from a Baby Fallacy",
+                    "C": "Shatterproof Fallacy",
+                    "D": "Hacker's Fallacy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "23. If an action is legal, but causes measurable harm to a person's reputation, it would violate the spirit of which ethical fallacy?",
+                "options": {
+                    "A": "Computer Game Fallacy",
+                    "B": "Free Information Fallacy",
+                    "C": "Law-Abiding Citizen Fallacy",
+                    "D": "Shatterproof Fallacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "24. What are 'moral principles' used to guide, as described by Computer Ethics?",
+                "options": {
+                    "A": "Hardware manufacturing",
+                    "B": "Software licensing",
+                    "C": "Computing and digital technologies use",
+                    "D": "Office supply management"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Computer Ethics and Fallacies",
+                "question": "25. The Computer Game Fallacy denies that digital actions have what kind of consequences?",
+                "options": {
+                    "A": "Theoretical",
+                    "B": "Fiscal",
+                    "C": "Real-world",
+                    "D": "Virtual"
+                },
+                "answer": "C",
+            },
+
+            // --- Topic 2: Professional Codes of Conduct (Q26-Q50) ---
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "26. What is a formal set of guidelines for professionals to ensure they act responsibly and honestly?",
+                "options": {
+                    "A": "Legislation",
+                    "B": "Code of Conduct",
+                    "C": "Case Study",
+                    "D": "Client Contract"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "27. A Code of Conduct typically covers which of the following areas?",
+                "options": {
+                    "A": "System architecture design",
+                    "B": "Honesty and integrity",
+                    "C": "Network topology mapping",
+                    "D": "Database normalization"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "28. What are the moral principles that guide a person's behavior, often forming the foundation of a Code of Conduct?",
+                "options": {
+                    "A": "Arbitration",
+                    "B": "Ethics",
+                    "C": "Defamation",
+                    "D": "Litigation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "29. What is the fundamental professional duty to be accountable for one's actions, decisions, and their consequences?",
+                "options": {
+                    "A": "Competence",
+                    "B": "Integrity",
+                    "C": "Responsibility",
+                    "D": "Privacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "30. Maintaining consistency between one's words and actions, especially when upholding professional and moral standards, is known as:",
+                "options": {
+                    "A": "Confidentiality",
+                    "B": "Integrity",
+                    "C": "Objectivity",
+                    "D": "Competence"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "31. The duty to continuously acquire and maintain the knowledge and skills necessary for the professional role is:",
+                "options": {
+                    "A": "Competence",
+                    "B": "Integrity",
+                    "C": "Respect for others",
+                    "D": "Responsibility"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "32. Treating colleagues and clients with fairness and courtesy, regardless of differences, is covered by the principle of:",
+                "options": {
+                    "A": "Conflict of Interest",
+                    "B": "Confidentiality",
+                    "C": "Respect for others",
+                    "D": "Competence"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "33. Which principle requires protecting client and employee information from unauthorized access or disclosure?",
+                "options": {
+                    "A": "Privacy",
+                    "B": "Integrity",
+                    "C": "Responsibility",
+                    "D": "Objectivity"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "34. A situation where a professional's private interests could potentially interfere with their official duties is a:",
+                "options": {
+                    "A": "Ethical dilemma",
+                    "B": "Conflict of Interest",
+                    "C": "Breach of Confidentiality",
+                    "D": "Lack of Competence"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "35. A Code of Conduct is designed to maintain public trust in the:",
+                "options": {
+                    "A": "Political system",
+                    "B": "Specific profession",
+                    "C": "Global economy",
+                    "D": "Educational structure"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "36. The principle of objectivity requires professionals to base judgments on facts and evidence, free from:",
+                "options": {
+                    "A": "Documentation",
+                    "B": "Personal bias",
+                    "C": "Technical specifications",
+                    "D": "Peer review"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "37. If a professional fails to keep their technical skills updated, they are violating the principle of:",
+                "options": {
+                    "A": "Integrity",
+                    "B": "Responsibility",
+                    "C": "Competence",
+                    "D": "Privacy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "38. Which aspect of the Code of Conduct relates to protecting all forms of private information?",
+                "options": {
+                    "A": "Objectivity",
+                    "B": "Confidentiality",
+                    "C": "Integrity",
+                    "D": "Competence"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "39. The Code of Conduct ensures that professionals act responsibly and:",
+                "options": {
+                    "A": "Profitably",
+                    "B": "Expediently",
+                    "C": "Honestly",
+                    "D": "Competitively"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "40. Treating others with fairness and courtesy is part of which professional principle?",
+                "options": {
+                    "A": "Conflict of Interest",
+                    "B": "Respect for others",
+                    "C": "Confidentiality",
+                    "D": "Competence"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "41. What must professionals avoid as it can jeopardize their official decision-making?",
+                "options": {
+                    "A": "Client meetings",
+                    "B": "Professional certifications",
+                    "C": "Conflict of Interest",
+                    "D": "Team collaboration"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "42. Responsibility requires accountability for one's actions, decisions, and their:",
+                "options": {
+                    "A": "Preconditions",
+                    "B": "Consequences",
+                    "C": "Certifications",
+                    "D": "Funding"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "43. Which two qualities are typically covered by a professional Code of Conduct, besides integrity?",
+                "options": {
+                    "A": "Aggression and deceit",
+                    "B": "Honesty and respect",
+                    "C": "Ignorance and bias",
+                    "D": "Secrecy and isolation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "44. The maintenance of professional standards and ethics is the primary function of a:",
+                "options": {
+                    "A": "Technical manual",
+                    "B": "Code of Conduct",
+                    "C": "Software license",
+                    "D": "Project timeline"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "45. Confidentiality specifically protects what kind of information from unauthorized access?",
+                "options": {
+                    "A": "Public domain information",
+                    "B": "Client and employee information",
+                    "C": "Open-source code",
+                    "D": "Global economic data"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "46. What principle means upholding professional and moral standards consistently?",
+                "options": {
+                    "A": "Objectivity",
+                    "B": "Competence",
+                    "C": "Integrity",
+                    "D": "Responsibility"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "47. Acting in good faith and without hidden agendas is an example of exercising:",
+                "options": {
+                    "A": "Conflict of Interest",
+                    "B": "Integrity",
+                    "C": "Arbitration",
+                    "D": "Litigation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "48. Continuous learning in a field is necessary to maintain:",
+                "options": {
+                    "A": "Objectivity",
+                    "B": "Competence",
+                    "C": "Confidentiality",
+                    "D": "Privacy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "49. Which principle is about being free from personal bias when making professional judgments?",
+                "options": {
+                    "A": "Responsibility",
+                    "B": "Objectivity",
+                    "C": "Respect for others",
+                    "D": "Privacy"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Professional Codes of Conduct",
+                "question": "50. A situation where a professional's private interest interferes with their official duty is a:",
+                "options": {
+                    "A": "Duty of care",
+                    "B": "Conflict of Interest",
+                    "C": "Code of ethics",
+                    "D": "Professional standard"
+                },
+                "answer": "B",
+            },
+
+            // --- Topic 3: Conflict Resolution in Technology (Q51-Q75) ---
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "51. What involves using neutral third parties to help resolve disputes without a binding decision?",
+                "options": {
+                    "A": "Litigation",
+                    "B": "Arbitration",
+                    "C": "Mediation",
+                    "D": "Case Studies"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "52. The goal of mediation is to facilitate voluntary settlement between:",
+                "options": {
+                    "A": "Witnesses",
+                    "B": "Experts",
+                    "C": "Disputing parties",
+                    "D": "Court officials"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "53. What refers to formal court proceedings used to settle disputes?",
+                "options": {
+                    "A": "Mediation",
+                    "B": "Litigation",
+                    "C": "Arbitration",
+                    "D": "Negotiation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "54. Litigation is often preferred when legal precedent or a definitive judicial ruling is:",
+                "options": {
+                    "A": "Unnecessary",
+                    "B": "Avoidable",
+                    "C": "Required",
+                    "D": "Optional"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "55. Which conflict resolution method results in a binding decision by an impartial arbitrator?",
+                "options": {
+                    "A": "Mediation",
+                    "B": "Litigation",
+                    "C": "Arbitration",
+                    "D": "Case Studies"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "56. Arbitration is described as being similar to what kind of proceeding?",
+                "options": {
+                    "A": "Public debate",
+                    "B": "Private trial",
+                    "C": "Informal negotiation",
+                    "D": "Legislative session"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "57. Which resource shows the practical application of conflict resolution techniques and their effectiveness?",
+                "options": {
+                    "A": "Legal statutes",
+                    "B": "Case Studies",
+                    "C": "Professional Codes",
+                    "D": "Ethical Fallacies"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "58. Mediation relies on the disputing parties reaching a:",
+                "options": {
+                    "A": "Judicial ruling",
+                    "B": "Mandated verdict",
+                    "C": "Voluntary settlement",
+                    "D": "Legislative compromise"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "59. Which method of conflict resolution is considered the most formal and public?",
+                "options": {
+                    "A": "Mediation",
+                    "B": "Arbitration",
+                    "C": "Negotiation",
+                    "D": "Litigation"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "60. The decision made by an impartial arbitrator in Arbitration is always:",
+                "options": {
+                    "A": "Advisory",
+                    "B": "Non-committal",
+                    "C": "Binding",
+                    "D": "Reviewable by the public"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "61. Mediation involves neutral third parties helping to resolve disputes without a:",
+                "options": {
+                    "A": "Voluntary agreement",
+                    "B": "Binding decision",
+                    "C": "Prior discussion",
+                    "D": "Public forum"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "62. Why might parties prefer Arbitration over Litigation?",
+                "options": {
+                    "A": "It is always publicly documented.",
+                    "B": "It is similar to a private trial.",
+                    "C": "The decision is never binding.",
+                    "D": "It avoids neutral third parties."
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "63. Litigation takes place in which setting?",
+                "options": {
+                    "A": "Private conference room",
+                    "B": "Court proceedings",
+                    "C": "Informal workplace meeting",
+                    "D": "University classroom"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "64. What is one practical application demonstrated by Case Studies in conflict resolution?",
+                "options": {
+                    "A": "Mandating legal precedents",
+                    "B": "Selection of mediators/arbitrators",
+                    "C": "Drafting international treaties",
+                    "D": "Designing network security protocols"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "65. The effectiveness of conflict resolution in various scenarios is shown through:",
+                "options": {
+                    "A": "New legislation",
+                    "B": "Formal court rulings",
+                    "C": "Case Studies",
+                    "D": "Technical audits"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "66. Mediation is characterized by the absence of a:",
+                "options": {
+                    "A": "Dispute",
+                    "B": "Voluntary outcome",
+                    "C": "Binding judgment",
+                    "D": "Resolution strategy"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "67. If a definitive judicial ruling is required, which method is most suitable?",
+                "options": {
+                    "A": "Mediation",
+                    "B": "Litigation",
+                    "C": "Arbitration",
+                    "D": "Negotiation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "68. Which process resembles a private trial, decided by a designated third party?",
+                "options": {
+                    "A": "Mediation",
+                    "B": "Negotiation",
+                    "C": "Arbitration",
+                    "D": "Litigation"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "69. In mediation, the third party acts as a facilitator and is:",
+                "options": {
+                    "A": "Partial",
+                    "B": "Neutral",
+                    "C": "Judicial",
+                    "D": "Adversarial"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "70. Court proceedings are the defining characteristic of:",
+                "options": {
+                    "A": "Mediation",
+                    "B": "Arbitration",
+                    "C": "Case Studies",
+                    "D": "Litigation"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "71. What do Case Studies help determine regarding conflict resolution?",
+                "options": {
+                    "A": "The future of AI",
+                    "B": "The effectiveness in various scenarios",
+                    "C": "Global stock market trends",
+                    "D": "Programming language selection"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "72. What is the fundamental difference between Mediation and Arbitration?",
+                "options": {
+                    "A": "Use of digital tools",
+                    "B": "Presence of lawyers",
+                    "C": "The binding nature of the decision",
+                    "D": "The location of the proceedings"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "73. A key feature of Mediation is that the resolution is a voluntary settlement reached by:",
+                "options": {
+                    "A": "The mediator",
+                    "B": "The disputing parties",
+                    "C": "A judge",
+                    "D": "A jury"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "74. The formal process involving legal precedent is most closely tied to:",
+                "options": {
+                    "A": "Negotiation",
+                    "B": "Arbitration",
+                    "C": "Mediation",
+                    "D": "Litigation"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Conflict Resolution in Technology",
+                "question": "75. What is the neutral third party in the Arbitration process called?",
+                "options": {
+                    "A": "Mediator",
+                    "B": "Judge",
+                    "C": "Arbitrator",
+                    "D": "Facilitator"
+                },
+                "answer": "C",
+            },
+
+            // --- Topic 4: Internet Law Concepts (Q76-Q100) ---
+            {
+                "topic": "Internet Law Concepts",
+                "question": "76. Freedom of speech is the right to express ideas and opinions without what kind of censorship?",
+                "options": {
+                    "A": "Social",
+                    "B": "Corporate",
+                    "C": "Academic",
+                    "D": "Government"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "77. Freedom of speech is limited when it comes to obscenity, threats, libel, or:",
+                "options": {
+                    "A": "Economic policy",
+                    "B": "National security",
+                    "C": "Technological innovation",
+                    "D": "Software development"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "78. What refers to the rules, policies, standards, and practices that coordinate and shape the use of the internet?",
+                "options": {
+                    "A": "Digital Sovereignty",
+                    "B": "Internet Governance",
+                    "C": "Cloud Computing",
+                    "D": "Intellectual Property"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "79. Internet Governance involves governments, private companies, civil society, and which other community?",
+                "options": {
+                    "A": "Biological research",
+                    "B": "Technical",
+                    "C": "Agricultural",
+                    "D": "Manufacturing"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "80. The ability to express opinions or share content online without revealing one's identity is called:",
+                "options": {
+                    "A": "Free Speech",
+                    "B": "Anonymity",
+                    "C": "Public Disclosure",
+                    "D": "Un-solicitation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "81. Anonymity protects privacy and promotes free expression but can also lead to misuse, such as:",
+                "options": {
+                    "A": "Technical maintenance",
+                    "B": "Cyberbullying",
+                    "C": "Code compilation",
+                    "D": "Data encryption"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "82. What is the act of making private or sensitive information about an individual publicly available without their consent?",
+                "options": {
+                    "A": "Anonymity",
+                    "B": "Defamation",
+                    "C": "Public Disclosure",
+                    "D": "Free Speech"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "83. Public Disclosure often violates an individual's right to:",
+                "options": {
+                    "A": "Profit",
+                    "B": "Anonymity",
+                    "C": "Privacy",
+                    "D": "Competence"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "84. A false statement presented as fact that harms a person’s reputation is defined as:",
+                "options": {
+                    "A": "Un-solicitation",
+                    "B": "Defamation",
+                    "C": "Public Disclosure",
+                    "D": "Free Speech"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "85. When defamation is spoken, it is known as:",
+                "options": {
+                    "A": "Libel",
+                    "B": "Spam",
+                    "C": "Slander",
+                    "D": "Public Disclosure"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "86. When defamation is written, it is known as:",
+                "options": {
+                    "A": "Slander",
+                    "B": "Un-solicitation",
+                    "C": "Libel",
+                    "D": "Anonymity"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "87. Sending unwanted or unsolicited communication (commonly called 'spam') is referred to as:",
+                "options": {
+                    "A": "Defamation",
+                    "B": "Litigation",
+                    "C": "Un-solicitation",
+                    "D": "Arbitration"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "88. Un-solicitation is often considered an invasion of:",
+                "options": {
+                    "A": "Integrity",
+                    "B": "Competence",
+                    "C": "Privacy",
+                    "D": "Objectivity"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "89. Internet governance coordinates and shapes the evolution of the internet:",
+                "options": {
+                    "A": "Regionally",
+                    "B": "Worldwide",
+                    "C": "Domestically",
+                    "D": "Locally"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "90. What can Anonymity promote, in addition to protecting privacy?",
+                "options": {
+                    "A": "Cybercrime",
+                    "B": "Fake news",
+                    "C": "Free expression",
+                    "D": "Commercial exploitation"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "91. Making sensitive information public without consent is the core issue of:",
+                "options": {
+                    "A": "Defamation",
+                    "B": "Public Disclosure",
+                    "C": "Anonymity misuse",
+                    "D": "Free Speech protection"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "92. Unwanted communication in the form of emails, ads, or calls is commonly known as:",
+                "options": {
+                    "A": "Libel",
+                    "B": "Slander",
+                    "C": "Spam",
+                    "D": "Litigation"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "93. Which form of defamation is explicitly written?",
+                "options": {
+                    "A": "Slander",
+                    "B": "Libel",
+                    "C": "Un-solicitation",
+                    "D": "Public Disclosure"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "94. Defamation must be a false statement presented as:",
+                "options": {
+                    "A": "An opinion",
+                    "B": "A hypothesis",
+                    "C": "A fact",
+                    "D": "A question"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "95. Which concept involves the coordination of the use and evolution of the internet?",
+                "options": {
+                    "A": "Internet Governance",
+                    "B": "Free Speech",
+                    "C": "Public Disclosure",
+                    "D": "Defamation"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "96. Free speech is *not* protected when it involves which type of harmful communication?",
+                "options": {
+                    "A": "Criticism",
+                    "B": "Political dissent",
+                    "C": "Threats",
+                    "D": "Satire"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "97. What is often called 'spam'?",
+                "options": {
+                    "A": "Defamation",
+                    "B": "Libel",
+                    "C": "Un-solicitation",
+                    "D": "Slander"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "98. Anonymity can be misused, leading to issues like fake news and:",
+                "options": {
+                    "A": "Increased privacy",
+                    "B": "Cyberbullying",
+                    "C": "Reduced system failure",
+                    "D": "Greater legal clarity"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "99. Public disclosure specifically makes what kind of information public?",
+                "options": {
+                    "A": "Historical",
+                    "B": "Sensitive or private",
+                    "C": "Scientific",
+                    "D": "Governmental"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Internet Law Concepts",
+                "question": "100. The right to express ideas without government interference is the definition of:",
+                "options": {
+                    "A": "Internet Governance",
+                    "B": "Public Disclosure",
+                    "C": "Anonymity",
+                    "D": "Free Speech"
+                },
+                "answer": "D",
+            }
+        ];
+
+        // --- Core Quiz Logic ---
+        let currentQuestionIndex = 0;
+        let userAnswers = []; // Stores { answer: 'A', correct: true/false } for each question
+
+        // Initialization function called when the script loads
+        function initializeQuiz() {
+            // Fill userAnswers array with placeholders for 100 questions
+            for (let i = 0; i < quizData.length; i++) {
+                userAnswers.push({ answer: null, correct: null });
+            }
+            document.getElementById('total-questions').textContent = quizData.length;
+            document.getElementById('total-q-num').textContent = quizData.length;
+            renderQuestion();
+        }
+
+        // Renders the current question and options to the DOM
+        function renderQuestion() {
+            if (currentQuestionIndex >= quizData.length) {
+                showFinishMessage();
+                return;
+            }
+
+            const currentQ = quizData[currentQuestionIndex];
+            const answerOptionsDiv = document.getElementById('answer-options');
+            const state = userAnswers[currentQuestionIndex];
+            const hasAnswered = state.answer !== null;
+            
+            // Update Header and Footer
+            document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('question-text').textContent = (currentQuestionIndex + 1) + ". " + currentQ.question;
+            document.getElementById('topic-display').textContent = currentQ.topic;
+            updateScoreDisplay();
+            updateNavigationButtons(hasAnswered);
+
+            // Clear previous options
+            answerOptionsDiv.innerHTML = '';
+
+            // Generate new options
+            Object.keys(currentQ.options).forEach(key => {
+                const optionText = currentQ.options[key];
+                const button = document.createElement('button');
+                button.classList.add('answer-button', 'text-left', 'px-6', 'py-4', 'bg-gray-50', 'text-gray-700', 'font-medium', 'rounded-lg', 'border', 'border-gray-200', 'hover:bg-gray-100', 'transition-colors', 'duration-200');
+                button.textContent = `${key}. ${optionText}`;
+                button.setAttribute('data-key', key);
+
+                if (hasAnswered) {
+                    button.disabled = true; // Disable if already answered
+                    
+                    if (key === currentQ.answer) {
+                        button.classList.add('correct');
+                    } else if (key === state.answer) {
+                        button.classList.add('wrong');
+                    }
+                } else {
+                    button.onclick = () => selectAnswer(key);
+                }
+
+                answerOptionsDiv.appendChild(button);
+            });
+        }
+
+        // Handles user selecting an answer
+        function selectAnswer(selectedKey) {
+            const currentQ = quizData[currentQuestionIndex];
+            const isCorrect = selectedKey === currentQ.answer;
+
+            // Store the answer and result
+            userAnswers[currentQuestionIndex] = {
+                answer: selectedKey,
+                correct: isCorrect
+            };
+
+            // Provide visual feedback and disable buttons
+            const buttons = document.querySelectorAll('#answer-options button');
+            buttons.forEach(button => {
+                const key = button.getAttribute('data-key');
+                button.disabled = true;
+
+                if (key === currentQ.answer) {
+                    button.classList.add('correct');
+                } else if (key === selectedKey) {
+                    button.classList.add('wrong');
+                }
+            });
+
+            // Update score and navigation state
+            updateScoreDisplay();
+            updateNavigationButtons(true);
+        }
+
+        // Navigates between questions
+        function navigate(direction) {
+            if (direction === 'prev' && currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+            } else if (direction === 'next') {
+                if (currentQuestionIndex < quizData.length - 1) {
+                    currentQuestionIndex++;
+                } else {
+                    showFinishMessage();
+                    return;
+                }
+            }
+            renderQuestion();
+        }
+
+        // Shows the final score message
+        function showFinishMessage() {
+            const finalScore = userAnswers.filter(a => a.correct).length;
+            document.getElementById('final-score').textContent = finalScore;
+            document.getElementById('finish-message').classList.remove('hidden');
+        }
+
+        // Restarts the quiz
+        function restartQuiz(reviewMode) {
+            document.getElementById('finish-message').classList.add('hidden');
+            if (reviewMode) {
+                // If in review mode, keep answers but start from the beginning
+                currentQuestionIndex = 0;
+            } else {
+                // If restarting fully, clear all answers
+                currentQuestionIndex = 0;
+                userAnswers = userAnswers.map(() => ({ answer: null, correct: null }));
+            }
+            renderQuestion();
+        }
+
+        // Updates the score display in the header
+        function updateScoreDisplay() {
+            const correctCount = userAnswers.filter(a => a.correct).length;
+            document.getElementById('current-score').textContent = correctCount;
+        }
+        
+        // Updates the state of the navigation buttons
+        function updateNavigationButtons(hasAnswered) {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            // Previous button logic
+            prevBtn.disabled = currentQuestionIndex === 0;
+            prevBtn.onclick = () => navigate('prev');
+
+            // Next button logic
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextBtn.textContent = hasAnswered ? 'Next Question' : 'Check & Next';
+                nextBtn.disabled = !hasAnswered; // Must answer before going to next (unless reviewing)
+            } else {
+                nextBtn.textContent = hasAnswered ? 'Finish Quiz' : 'Check & Finish';
+                nextBtn.disabled = !hasAnswered; // Must answer the last question to finish
+            }
+            nextBtn.onclick = () => navigate('next');
+        }
+
+        // Initialize the quiz on page load
+        window.onload = initializeQuiz;
+    </script>
+</body>
+</html>

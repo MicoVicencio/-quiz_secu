@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>80-Question Security Quiz</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        /* Custom styles for button feedback */
+        .answer-button {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .correct {
+            background-color: #10B981 !important; /* Green-600 */
+            color: white !important;
+            border-color: #059669 !important;
+            transform: scale(1.02);
+        }
+        .wrong {
+            background-color: #EF4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #DC2626 !important;
+            transform: scale(0.98);
+            opacity: 0.7;
+        }
+        .correct-after-wrong {
+            background-color: #34D399 !important; /* Green-400, slightly lighter */
+            color: white !important;
+            border-color: #059669 !important;
+        }
+        /* Style for the disabled state to look different from checked states */
+        .answer-button:disabled:not(.correct):not(.wrong):not(.correct-after-wrong) {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Quiz Container -->
+    <div id="quiz-container" class="bg-white shadow-2xl rounded-xl w-full max-w-2xl p-6 md:p-10 border border-gray-100">
+
+        <!-- Header -->
+        <header class="mb-6 border-b pb-4">
+            <h1 class="text-3xl font-extrabold text-gray-800">Security Fundamentals Quiz</h1>
+            <div class="mt-2 flex justify-between items-center text-sm font-medium text-gray-600">
+                <span id="topic-display" class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"></span>
+                <span id="score-display">Score: <strong class="text-green-600" id="current-score">0</strong> / <span id="total-questions">80</span></span>
+            </div>
+        </header>
+
+        <!-- Question Section -->
+        <div id="question-section" class="mb-8">
+            <p class="text-lg font-semibold text-gray-800 mb-4" id="question-text"></p>
+            <div id="answer-options" class="grid grid-cols-1 gap-4">
+                <!-- Answer buttons will be injected here -->
+            </div>
+        </div>
+
+        <!-- Navigation and Status Footer -->
+        <footer class="flex flex-col md:flex-row justify-between items-center border-t pt-4 space-y-4 md:space-y-0">
+            <div class="text-gray-500 font-medium text-sm">
+                Question <span id="current-q-num" class="font-bold text-gray-800">1</span> of <span class="font-bold text-gray-800" id="total-q-num">80</span>
+            </div>
+            <div class="flex space-x-3">
+                <button id="prev-btn" class="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Previous
+                </button>
+                <button id="next-btn" class="px-8 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Check & Next
+                </button>
+            </div>
+        </footer>
+
+        <!-- Finish Quiz Modal/Message -->
+        <div id="finish-message" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
+                <h2 class="text-3xl font-bold text-indigo-600 mb-4">Quiz Complete!</h2>
+                <p class="text-xl text-gray-700 mb-6">Your final score is: <span class="font-extrabold text-4xl text-green-600" id="final-score"></span> / 80</p>
+                <p class="text-gray-500 mb-8">Great job on finishing the quiz. Click 'Review' to go back to the first question or 'Restart' to try again.</p>
+                <div class="flex justify-center space-x-4">
+                    <button onclick="restartQuiz(true)" class="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors">Review</button>
+                    <button onclick="restartQuiz(false)" class="px-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">Restart</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Use a function to safely access global environment variables
+        const getFirebaseConfig = () => {
+            if (typeof __firebase_config !== 'undefined') {
+                try {
+                    return JSON.parse(__firebase_config);
+                } catch (e) {
+                    console.error("Error parsing __firebase_config:", e);
+                    return null;
+                }
+            }
+            return null; // Should not happen in Canvas environment
+        };
+        // The quiz data array contains all questions, copied from the Python file.
+        const quizData = [
+            // --- Topic 1: Security in Cloud Computing and Virtualization (Q1-Q20) ---
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "1. Cloud computing offers on-demand access to scalable resources, reducing costs, and enabling:",
+                "options": {
+                    "A": "flexible resources",
+                    "B": "economies of scale",
+                    "C": "global collaboration",
+                    "D": "faster innovation"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "2. The delivery of computing services—such as servers, storage, databases, networking, software, and analytics—over the internet ('the cloud') is known as:",
+                "options": {
+                    "A": "Virtualization",
+                    "B": "Cloud Computing",
+                    "C": "Application Virtualization",
+                    "D": "Hybrid Cloud"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "3. Which of the following is an example of a Cloud Service Model that provides a platform allowing customers to develop, run, and manage applications without managing infrastructure?",
+                "options": {
+                    "A": "Infrastructure as a Service (IaaS)",
+                    "B": "Software as a Service (SaaS)",
+                    "C": "Platform as a Service (PaaS)",
+                    "D": "Public Cloud"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "4. Which of the following is an example of a Cloud Service Model that delivers software applications over the internet on a subscription basis?",
+                "options": {
+                    "A": "Infrastructure as a Service (IaaS)",
+                    "B": "Platform as a Service (PaaS)",
+                    "C": "Software as a Service (SaaS)",
+                    "D": "Hybrid Cloud"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "5. Which Cloud Deployment Model is characterized by services offered over the public internet and available to everyone?",
+                "options": {
+                    "A": "Private Cloud",
+                    "B": "Hybrid Cloud",
+                    "C": "Public Cloud",
+                    "D": "OS-Level Virtualization"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "6. Cloud infrastructure operated solely for one organization describes which deployment model?",
+                "options": {
+                    "A": "Hybrid Cloud",
+                    "B": "Public Cloud",
+                    "C": "Private Cloud",
+                    "D": "Application Virtualization"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "7. What is the process of creating a virtual version of something, such as a server, storage device, network, or operating system?",
+                "options": {
+                    "A": "Virtualization",
+                    "B": "Cloud Computing",
+                    "C": "Hypervisor Security",
+                    "D": "Continuous Monitoring"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "8. What allows multiple virtual systems, called virtual machines (VMs), to run on a single hardware platform independently?",
+                "options": {
+                    "A": "Application Virtualization",
+                    "B": "Virtualization",
+                    "C": "Public Cloud",
+                    "D": "Strong Identity and Access Management"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "9. Which type of virtualization creates fully isolated virtual machines that emulate physical hardware?",
+                "options": {
+                    "A": "Application Virtualization",
+                    "B": "OS-Level Virtualization (Containerization)",
+                    "C": "Hardware Virtualization (Full Virtualization)",
+                    "D": "Private Cloud"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "10. Which type of virtualization virtualizes applications rather than the whole OS or hardware?",
+                "options": {
+                    "A": "OS-Level Virtualization (Containerization)",
+                    "B": "Hardware Virtualization (Full Virtualization)",
+                    "C": "Application Virtualization",
+                    "D": "Infrastructure as a Service (IaaS)"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "11. Sensitive data stored in cloud environments can be exposed due to unauthorized access, leading to which security challenge?",
+                "options": {
+                    "A": "Misconfigurations",
+                    "B": "Hypervisor Attacks",
+                    "C": "Data Breaches",
+                    "D": "Strong Identity and Access Management (IAM)"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "12. Misconfigured cloud resources (e.g., storage buckets, virtual networks) are one of the leading causes of security incidents, known as:",
+                "options": {
+                    "A": "Data Breaches",
+                    "B": "Misconfigurations",
+                    "C": "Hypervisor Attacks",
+                    "D": "Container Security"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "13. Since hypervisors control multiple virtual machines, attacks targeting the hypervisor can compromise all VMs on a host. This challenge is called:",
+                "options": {
+                    "A": "Data Breaches",
+                    "B": "Misconfigurations",
+                    "C": "Hypervisor Attacks",
+                    "D": "Network Security"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "14. Implementing least privilege access and multi-factor authentication is part of which security solution?",
+                "options": {
+                    "A": "Encryption",
+                    "B": "Network Security",
+                    "C": "Strong Identity and Access Management (IAM)",
+                    "D": "Patch Management"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "15. The practice of encrypting data at rest and in transit using strong cryptographic algorithms is:",
+                "options": {
+                    "A": "Patch Management",
+                    "B": "Encryption",
+                    "C": "Secure Configuration",
+                    "D": "Hypervisor Security"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "16. Which security solution involves using segmentation, firewalls, VPCs, and monitoring with IDS/IPS?",
+                "options": {
+                    "A": "Strong Identity and Access Management (IAM)",
+                    "B": "Network Security",
+                    "C": "Container Security",
+                    "D": "Backup & Disaster Recovery"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "17. What is the practice of keeping hypervisors, OS, and apps up to date with security patches?",
+                "options": {
+                    "A": "Secure Configuration",
+                    "B": "Continuous Monitoring",
+                    "C": "Patch Management",
+                    "D": "Hypervisor Security"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "18. Harden hypervisors, disable unnecessary services, and limit access are parts of which security solution?",
+                "options": {
+                    "A": "Patch Management",
+                    "B": "Container Security",
+                    "C": "Hypervisor Security",
+                    "D": "Incident Response & Forensics"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "19. Regularly back up data and test recovery procedures are parts of which best practice?",
+                "options": {
+                    "A": "Container Security",
+                    "B": "Incident Response & Forensics",
+                    "C": "Backup & Disaster Recovery",
+                    "D": "Encryption"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security in Cloud Computing and Virtualization",
+                "question": "20. What is an example of a cloud service listed in the reviewer text?",
+                "options": {
+                    "A": "Terraform",
+                    "B": "Microsoft Azure",
+                    "C": "SIEM",
+                    "D": "IDS/IPS"
+                },
+                "answer": "B",
+            },
+
+            // --- Topic 2: Information Assurance and Security (Q21-Q40) ---
+            {
+                "topic": "Information Assurance and Security",
+                "question": "21. Compliance with recognized regulations and standards is critical in achieving information assurance and fostering:",
+                "options": {
+                    "A": "confidentiality",
+                    "B": "trust",
+                    "C": "availability",
+                    "D": "integrity"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "22. The General Data Protection Regulation (GDPR) became effective across all EU member states on:",
+                "options": {
+                    "A": "1996",
+                    "B": "May 25, 2018",
+                    "C": "2003",
+                    "D": "2005"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "23. One objective of GDPR is to protect individual privacy rights and give individuals greater control over:",
+                "options": {
+                    "A": "health insurance",
+                    "B": "personal data",
+                    "C": "information assets",
+                    "D": "Business Associate Agreements (BAAs)"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "24. Which GDPR principle requires that data must be processed legally, fairly, and clearly communicated?",
+                "options": {
+                    "A": "Purpose Limitation",
+                    "B": "Data Minimization",
+                    "C": "Lawfulness, Fairness, and Transparency",
+                    "D": "Accountability"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "25. The GDPR principle that requires data collected only for specific and legitimate purposes is:",
+                "options": {
+                    "A": "Accuracy",
+                    "B": "Purpose Limitation",
+                    "C": "Storage Limitation",
+                    "D": "Integrity and Confidentiality"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "26. Which GDPR principle requires organizations to collect only necessary data for intended purposes?",
+                "options": {
+                    "A": "Data Minimization",
+                    "B": "Storage Limitation",
+                    "C": "Accuracy",
+                    "D": "Accountability"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "27. Keeping personal data accurate and up to date is required by which GDPR principle?",
+                "options": {
+                    "A": "Purpose Limitation",
+                    "B": "Lawfulness, Fairness, and Transparency",
+                    "C": "Accuracy",
+                    "D": "Integrity and Confidentiality"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "28. The GDPR principle to Retain data only as long as needed for its purpose is:",
+                "options": {
+                    "A": "Accountability",
+                    "B": "Data Minimization",
+                    "C": "Storage Limitation",
+                    "D": "Purpose Limitation"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "29. Protecting data against unauthorized access, alteration, or destruction is the goal of which GDPR principle?",
+                "options": {
+                    "A": "Accuracy",
+                    "B": "Integrity and Confidentiality",
+                    "C": "Lawfulness, Fairness, and Transparency",
+                    "D": "Accountability"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "30. Which GDPR principle requires Organizations must demonstrate compliance with all GDPR principles?",
+                "options": {
+                    "A": "Storage Limitation",
+                    "B": "Accountability",
+                    "C": "Data Minimization",
+                    "D": "Purpose Limitation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "31. The U.S. federal law enacted in 1996 to protect sensitive patient health information is:",
+                "options": {
+                    "A": "GDPR",
+                    "B": "ISO/IEC 27001",
+                    "C": "HIPAA",
+                    "D": "ISMS"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "32. One of the objectives of HIPAA is to protect medical records and:",
+                "options": {
+                    "A": "data protection laws",
+                    "B": "personal health data",
+                    "C": "compliance programs",
+                    "D": "information assets"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "33. Which HIPAA rule, effective in 2003, established Standards for Protected Health Information (PHI)?",
+                "options": {
+                    "A": "Privacy Rule",
+                    "B": "Security Rule",
+                    "C": "Business Associate Agreements (BAAs)",
+                    "D": "Risk Assessment and Treatment"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "34. The HIPAA rule, effective in 2005, which mandated Administrative, physical, and technical safeguards for electronic PHI is the:",
+                "options": {
+                    "A": "Privacy Rule",
+                    "B": "Security Rule",
+                    "C": "Compliance Audit",
+                    "D": "Storage Limitation"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "35. HIPAA encouraged compliance programs and:",
+                "options": {
+                    "A": "Storage Limitation",
+                    "B": "Lawfulness, Fairness, and Transparency",
+                    "C": "Business Associate Agreements (BAAs)",
+                    "D": "Risk Assessment and Treatment"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "36. ISO/IEC 27001 is a globally recognized standard for establishing, implementing, maintaining, and continually improving an:",
+                "options": {
+                    "A": "Protected Health Information (PHI)",
+                    "B": "Information Security Management System (ISMS)",
+                    "C": "electronic health records (EHRs)",
+                    "D": "Business Impact Analysis (BIA)"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "37. ISO/IEC 27001 provides a systematic approach to ensure confidentiality, integrity, and:",
+                "options": {
+                    "A": "trust",
+                    "B": "compliance",
+                    "C": "availability",
+                    "D": "Risk Assessment"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "38. Which Key Component of ISO/IEC 27001 involves Senior management supports the ISMS?",
+                "options": {
+                    "A": "Risk Assessment and Treatment",
+                    "B": "Security Controls",
+                    "C": "Continuous Improvement",
+                    "D": "Leadership and Commitment"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "39. The ISO/IEC 27001 Key Component 'Security Controls' is based on:",
+                "options": {
+                    "A": "7 Key Principles",
+                    "B": "93 reference controls",
+                    "C": "5 Phases",
+                    "D": "Administrative safeguards"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Information Assurance and Security",
+                "question": "40. A benefit of ISO/IEC 27001 is Enhanced trust with customers and:",
+                "options": {
+                    "A": "Business Associate Agreements (BAAs)",
+                    "B": "security risks",
+                    "C": "regulators",
+                    "D": "legal and contractual requirements"
+                },
+                "answer": "C",
+            },
+
+            // --- Topic 3: Incident Response and Disaster Recovery (Q41-Q60) ---
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "41. What is an Organized approach to handling cybersecurity incidents?",
+                "options": {
+                    "A": "Disaster Recovery",
+                    "B": "Business Impact Analysis (BIA)",
+                    "C": "Incident Response",
+                    "D": "Security Auditing"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "42. Incident Response is a Structured process to swiftly identify, contain, and recover from threats ensuring:",
+                "options": {
+                    "A": "software updates",
+                    "B": "minimal impact",
+                    "C": "Natural disasters",
+                    "D": "critical business functions"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "43. Which phase of the NIST (SP 800-61) Incident Response process involves Planning, team setup, and communication strategies?",
+                "options": {
+                    "A": "Detection & Analysis",
+                    "B": "Preparation",
+                    "C": "Containment, Eradication, and Recovery",
+                    "D": "Post-Incident Activity"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "44. The NIST phase for Incident Response that involves Identify and confirm incidents is:",
+                "options": {
+                    "A": "Preparation",
+                    "B": "Detection & Analysis",
+                    "C": "Post-Incident Activity",
+                    "D": "Strategy Development"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "45. Which NIST Incident Response phase involves Stop spread, remove threat, restore systems?",
+                "options": {
+                    "A": "Post-Incident Activity",
+                    "B": "Detection & Analysis",
+                    "C": "Containment, Eradication, and Recovery",
+                    "D": "Risk Assessment"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "46. Review lessons learned and improve describes which NIST Incident Response phase?",
+                "options": {
+                    "A": "Preparation",
+                    "B": "Detection & Analysis",
+                    "C": "Containment, Eradication, and Recovery",
+                    "D": "Post-Incident Activity"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "47. What is the Strategy and process of restoring critical business functions, data, and infrastructure after disruptions?",
+                "options": {
+                    "A": "Incident Response",
+                    "B": "Security Auditing",
+                    "C": "Disaster Recovery",
+                    "D": "Risk Assessment"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "48. Disaster Recovery ensures the organization can resume operations:",
+                "options": {
+                    "A": "independently",
+                    "B": "efficiently",
+                    "C": "globally",
+                    "D": "automatically"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "49. Which DR Step involves Identify threats and vulnerabilities?",
+                "options": {
+                    "A": "Business Impact Analysis (BIA)",
+                    "B": "Strategy Development",
+                    "C": "Risk Assessment",
+                    "D": "Plan Development"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "50. Determining critical functions and systems is the purpose of which DR Step?",
+                "options": {
+                    "A": "Risk Assessment",
+                    "B": "Plan Development",
+                    "C": "Business Impact Analysis (BIA)",
+                    "D": "Maintenance"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "51. Which DR Step involves Define recovery methods for systems and data?",
+                "options": {
+                    "A": "Business Impact Analysis (BIA)",
+                    "B": "Strategy Development",
+                    "C": "Testing",
+                    "D": "Maintenance"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "52. Document DR plan, roles, and procedures falls under which DR Step?",
+                "options": {
+                    "A": "Plan Development",
+                    "B": "Strategy Development",
+                    "C": "Risk Assessment",
+                    "D": "Testing"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "53. The DR Step that involves Regularly test DR plan effectiveness is:",
+                "options": {
+                    "A": "Maintenance",
+                    "B": "Testing",
+                    "C": "Plan Development",
+                    "D": "Risk Assessment"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "54. Review and update DR plan regularly is the focus of which DR Step?",
+                "options": {
+                    "A": "Testing",
+                    "B": "Plan Development",
+                    "C": "Strategy Development",
+                    "D": "Maintenance"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "55. Which U.S. government agency develops standards, guidelines, and best practices for technology and cybersecurity, and publishes the SP 800-61 framework?",
+                "options": {
+                    "A": "HIPAA",
+                    "B": "NIST",
+                    "C": "ISO/IEC 27001",
+                    "D": "GDPR"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "56. Which of the following is an example of a cybersecurity incident mentioned in the text?",
+                "options": {
+                    "A": "Natural disasters",
+                    "B": "Malware attacks",
+                    "C": "Power outages",
+                    "D": "System vulnerabilities"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "57. Which of the following is an example of a disruption leading to Disaster Recovery procedures, mentioned in the text?",
+                "options": {
+                    "A": "Phishing attacks",
+                    "B": "Malware attacks",
+                    "C": "Power outages",
+                    "D": "Ransomware Attack (2017)"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "58. The WannaCry Ransomware Attack occurred in which year?",
+                "options": {
+                    "A": "1996",
+                    "B": "2003",
+                    "C": "2017",
+                    "D": "2005"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "59. The WannaCry Ransomware Attack showed the importance of strong incident response and:",
+                "options": {
+                    "A": "software updates",
+                    "B": "Disaster Recovery",
+                    "C": "recovery plans",
+                    "D": "power outages"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Incident Response and Disaster Recovery",
+                "question": "60. The NIST (SP 800-61) phases of Incident Response are used globally, not just in the U.S., because they’re practical and:",
+                "options": {
+                    "A": "planned",
+                    "B": "detailed",
+                    "C": "tested",
+                    "D": "maintained"
+                },
+                "answer": "B",
+            },
+
+            // --- Topic 4: Security Auditing and Penetration Testing (Q61-Q80) ---
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "61. What is Checking a system or network to see if it is safe?",
+                "options": {
+                    "A": "Penetration Testing",
+                    "B": "Reporting",
+                    "C": "Security Auditing",
+                    "D": "Gaining Access"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "62. The purpose of Security Auditing is to Find security problems before hackers do, ensure rules are followed, and:",
+                "options": {
+                    "A": "keep data safe",
+                    "B": "Simulate an attack",
+                    "C": "Discover weak spots",
+                    "D": "Test strength of security"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "63. Which type of audit is Done by company’s own team?",
+                "options": {
+                    "A": "External Audit",
+                    "B": "Compliance Audit",
+                    "C": "Internal Audit",
+                    "D": "Penetration Test"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "64. Which type of audit is Done by outside experts?",
+                "options": {
+                    "A": "Internal Audit",
+                    "B": "External Audit",
+                    "C": "Compliance Audit",
+                    "D": "Security Auditing"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "65. The type of audit that Checks if system follows legal or company rules is a:",
+                "options": {
+                    "A": "Internal Audit",
+                    "B": "External Audit",
+                    "C": "Compliance Audit",
+                    "D": "Security Audit"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "66. What is Simulating an attack to find system weaknesses?",
+                "options": {
+                    "A": "Security Auditing",
+                    "B": "Compliance Audit",
+                    "C": "Penetration Testing",
+                    "D": "Internal Audit"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "67. In Penetration Testing, the Tester acts like a hacker, but with:",
+                "options": {
+                    "A": "a report",
+                    "B": "permission",
+                    "C": "weak spots",
+                    "D": "a system"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "68. One purpose of Penetration Testing is to Discover weak spots before:",
+                "options": {
+                    "A": "external audits",
+                    "B": "real hackers do",
+                    "C": "reporting",
+                    "D": "scanning"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "69. Which step of Penetration Testing involves Decide what to test?",
+                "options": {
+                    "A": "Scanning",
+                    "B": "Gaining Access",
+                    "C": "Planning",
+                    "D": "Reporting"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "70. Which step of Penetration Testing involves Look for open ports or weak points?",
+                "options": {
+                    "A": "Scanning",
+                    "B": "Gaining Access",
+                    "C": "Maintaining Access",
+                    "D": "Planning"
+                },
+                "answer": "A",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "71. The Penetration Testing step to Try to enter the system is:",
+                "options": {
+                    "A": "Scanning",
+                    "B": "Gaining Access",
+                    "C": "Maintaining Access",
+                    "D": "Reporting"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "72. Which Penetration Testing step involves See how long you can stay undetected?",
+                "options": {
+                    "A": "Planning",
+                    "B": "Scanning",
+                    "C": "Gaining Access",
+                    "D": "Maintaining Access"
+                },
+                "answer": "D",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "73. Share results and fixes describes which Penetration Testing step?",
+                "options": {
+                    "A": "Gaining Access",
+                    "B": "Planning",
+                    "C": "Reporting",
+                    "D": "Maintaining Access"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "74. Security Audit Reviews settings, policies, and:",
+                "options": {
+                    "A": "a real attack",
+                    "B": "compliance",
+                    "C": "weak spots",
+                    "D": "fixes"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "75. A Security Audit is considered Less:",
+                "options": {
+                    "A": "active",
+                    "B": "risky",
+                    "C": "open",
+                    "D": "secure"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "76. Penetration Test Simulates a:",
+                "options": {
+                    "A": "Compliance Audit",
+                    "B": "real attack",
+                    "C": "security setup",
+                    "D": "weak point"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "77. Penetration Test is described as More active and:",
+                "options": {
+                    "A": "secure",
+                    "B": "compliant",
+                    "C": "risky",
+                    "D": "undetected"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "78. Audit is Checking locks; Pen test is Trying to:",
+                "options": {
+                    "A": "fix the locks",
+                    "B": "check the keys",
+                    "C": "open the locks",
+                    "D": "share results"
+                },
+                "answer": "C",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "79. A benefit of both Security Auditing and Penetration Testing is to Find and fix problems:",
+                "options": {
+                    "A": "later",
+                    "B": "early",
+                    "C": "passively",
+                    "D": "risky"
+                },
+                "answer": "B",
+            },
+            {
+                "topic": "Security Auditing and Penetration Testing",
+                "question": "80. Security Auditing and Penetration Testing help to Protect company:",
+                "options": {
+                    "A": "reputation",
+                    "B": "policies",
+                    "C": "settings",
+                    "D": "systems"
+                },
+                "answer": "A",
+            }
+        ];
+
+        // --- Global State ---
+        let currentQuestionIndex = 0;
+        // Stores the user's answer and whether it was correct: { answer: 'A', correct: true/false }
+        const userAnswers = new Array(quizData.length).fill(null);
+
+
+        // --- DOM Elements ---
+        const questionTextEl = document.getElementById('question-text');
+        const answerOptionsEl = document.getElementById('answer-options');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const currentQNumEl = document.getElementById('current-q-num');
+        const topicDisplayEl = document.getElementById('topic-display');
+        const currentScoreEl = document.getElementById('current-score');
+        const finishMessageEl = document.getElementById('finish-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const totalQNumEl = document.getElementById('total-q-num');
+
+        // Set total question count once
+        totalQNumEl.textContent = quizData.length;
+
+
+        // --- Core Functions ---
+
+        /**
+         * Renders the current question and its options, reflecting saved state (answer/feedback).
+         */
+        function renderQuestion() {
+            if (currentQuestionIndex >= quizData.length) {
+                showFinishMessage();
+                return;
+            }
+
+            const currentQ = quizData[currentQuestionIndex];
+            const savedAnswer = userAnswers[currentQuestionIndex];
+
+            // 1. Update status display
+            currentQNumEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.innerHTML = currentQ.question;
+            topicDisplayEl.textContent = currentQ.topic;
+            updateScoreDisplay();
+
+            // 2. Clear and render options
+            answerOptionsEl.innerHTML = '';
+            const options = currentQ.options;
+            const isAnswered = savedAnswer !== null;
+
+            for (const [key, value] of Object.entries(options)) {
+                const btn = document.createElement('button');
+                btn.className = 'answer-button w-full text-left p-4 rounded-lg border-2 border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-400 focus:outline-none';
+                btn.textContent = `${key}. ${value}`;
+                btn.dataset.key = key;
+
+                if (isAnswered) {
+                    // Apply feedback colors if already answered
+                    btn.disabled = true; // Disable interaction on review
+                    applyFeedbackClasses(btn, key, currentQ.answer, savedAnswer.answer);
+                } else {
+                    // Enable click handler for un-answered questions
+                    btn.onclick = () => selectAnswer(key);
+                }
+                answerOptionsEl.appendChild(btn);
+            }
+
+            // 3. Update navigation buttons
+            updateNavigationButtons(isAnswered);
+        }
+
+        /**
+         * Selects an answer for the current question and provides visual feedback.
+         * @param {string} selectedKey - The key of the selected answer (A, B, C, D).
+         */
+        function selectAnswer(selectedKey) {
+            const currentQ = quizData[currentQuestionIndex];
+            const isCorrect = selectedKey === currentQ.answer;
+
+            // 1. Save the answer state
+            userAnswers[currentQuestionIndex] = { answer: selectedKey, correct: isCorrect };
+
+            // 2. Apply visual feedback to all buttons
+            const buttons = answerOptionsEl.querySelectorAll('.answer-button');
+            buttons.forEach(btn => {
+                const key = btn.dataset.key;
+                btn.disabled = true; // Disable all buttons immediately
+                applyFeedbackClasses(btn, key, currentQ.answer, selectedKey);
+            });
+
+            // 3. Update score and navigation
+            updateScoreDisplay();
+            updateNavigationButtons(true);
+        }
+
+        /**
+         * Applies the correct CSS classes for feedback based on the user's choice.
+         * @param {HTMLElement} btn - The button element.
+         * @param {string} key - The option key (A, B, C, D) for this button.
+         * @param {string} correctAnswer - The correct answer key.
+         * @param {string} selectedAnswer - The user's selected answer key.
+         */
+        function applyFeedbackClasses(btn, key, correctAnswer, selectedAnswer) {
+            btn.classList.remove('bg-gray-50', 'hover:bg-indigo-50', 'hover:border-indigo-400', 'border-gray-200');
+
+            if (key === correctAnswer) {
+                // Always green for the correct answer
+                btn.classList.add('correct');
+            } else if (key === selectedAnswer) {
+                // Red for the incorrect user answer
+                btn.classList.add('wrong');
+            } else {
+                // Default style for unselected, incorrect options (disabled grey)
+                btn.classList.add('bg-gray-50', 'border-gray-200', 'opacity-60');
+            }
+        }
+
+        /**
+         * Calculates and updates the score display.
+         */
+        function updateScoreDisplay() {
+            const correctCount = userAnswers.filter(a => a && a.correct).length;
+            currentScoreEl.textContent = correctCount;
+        }
+
+        /**
+         * Updates the state of the Previous and Next/Check buttons.
+         * @param {boolean} isAnswered - True if the current question has been answered.
+         */
+        function updateNavigationButtons(isAnswered) {
+            // Previous Button
+            prevBtn.disabled = currentQuestionIndex === 0;
+
+            // Next Button logic
+            if (currentQuestionIndex === quizData.length - 1) {
+                // Last question
+                nextBtn.textContent = 'Finish Quiz';
+                nextBtn.onclick = () => showFinishMessage();
+            } else {
+                nextBtn.textContent = isAnswered ? 'Next Question' : 'Check & Next';
+                nextBtn.onclick = isAnswered ? () => navigate(1) : () => checkAndMove(1);
+            }
+
+            // Ensure 'Check & Next' is enabled if not answered, otherwise 'Next Question'
+            nextBtn.disabled = !isAnswered && (nextBtn.textContent === 'Next Question' || nextBtn.textContent === 'Check & Next');
+            nextBtn.disabled = false; // Override: we only disable navigation buttons if we're on the last question
+        }
+
+        /**
+         * Handler for the next button when the question hasn't been answered yet.
+         * It tries to find a user selection before moving.
+         */
+        function checkAndMove(direction) {
+             // If not answered, force them to pick an answer
+            if (userAnswers[currentQuestionIndex] === null) {
+                // We'll rely on the visual selection/feedback process to handle 'checking'
+                // The `selectAnswer` function will apply feedback and update the button to 'Next Question'
+                // For 'Check & Next' to be clicked, a user must have just clicked an answer button,
+                // which calls selectAnswer(). If they somehow managed to click 'Check & Next' without selecting,
+                // we should do nothing or prompt them.
+                console.warn('Please select an answer first.');
+                return;
+            }
+
+            // If answered, just navigate
+            navigate(direction);
+        }
+
+        /**
+         * Navigates the quiz to the next or previous question.
+         * @param {number} step - The step to take (+1 for next, -1 for previous).
+         */
+        function navigate(step) {
+            currentQuestionIndex += step;
+
+            if (currentQuestionIndex >= quizData.length) {
+                showFinishMessage();
+            } else if (currentQuestionIndex < 0) {
+                currentQuestionIndex = 0;
+            } else {
+                // Hide finish message if visible
+                finishMessageEl.classList.add('hidden');
+                renderQuestion();
+            }
+        }
+
+        /**
+         * Displays the quiz finished message.
+         */
+        function showFinishMessage() {
+            const finalScore = userAnswers.filter(a => a && a.correct).length;
+            finalScoreEl.textContent = finalScore;
+            finishMessageEl.classList.remove('hidden');
+        }
+
+        /**
+         * Restarts the quiz.
+         * @param {boolean} isReviewMode - If true, resets currentQuestionIndex to 0 but keeps answers. If false, wipes all answers.
+         */
+        function restartQuiz(isReviewMode) {
+            finishMessageEl.classList.add('hidden');
+            currentQuestionIndex = 0;
+            if (!isReviewMode) {
+                // Wipe answers for a true restart
+                userAnswers.fill(null);
+            }
+            renderQuestion();
+        }
+
+
+        // --- Event Listeners and Initialization ---
+
+        // Attach global navigation listeners (they are overwritten in updateNavigationButtons for simplicity)
+        // Ensure initial assignment if not already done by the renderer on load
+        prevBtn.onclick = () => navigate(-1);
+        nextBtn.onclick = () => checkAndMove(1);
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', renderQuestion);
+
+    </script>
+</body>
+</html>
